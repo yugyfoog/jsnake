@@ -11,8 +11,15 @@ body {
 }
 
 .box {
-  background-color: #888;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background-color: black;
   color: #f80;
   padding: 20px;
+  font-family: courier;
+}
+
+.score {
   font-family: courier;
 }
