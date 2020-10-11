@@ -8,6 +8,8 @@ let egg_timer = 0;
 
 let score_timer = 10;
 
+let flash_count = 13;
+
 let field = Array(42*42); // array of bool
 
 class Point {
@@ -99,9 +101,40 @@ function draw_array() {
   }
 }
 
+function draw_array_inverse() {
+  for (i = 0; i < 42; i++) {
+    for (j = 0; j < 42; j++) {
+      if (point_set(new Point(i, j))) {
+        draw_square(i, j, black);
+      }
+      else {
+        draw_square(i, j, amber);
+      }
+    }
+  }
+}
+
+function flash_screen() {
+  flash_count -= 1;
+  if (flash_count <= 0) {
+    clearInterval(timer);
+    between_games();
+  }
+  else {
+    if (flash_count%2 == 0) {
+      draw_array_inverse()
+    }
+    else {
+      draw_array();
+    }
+  }
+}
+
 function end_game() {
     clearInterval(timer);
     document.removeEventListener("keydown", game_key);
+    flash_count = 13;
+    timer = setInterval(flash_screen, 100);
 }
 
 function update_score() {
@@ -261,6 +294,7 @@ function game_key(event) {
 function start_game(e) {
   document.removeEventListener("keydown", start_game);
   document.addEventListener("keydown", game_key);
+  init_array();
   score = 0;
   display_score();
   snake_head = 0;
@@ -276,8 +310,8 @@ function start_game(e) {
   timer = setInterval(on_clock, 100);
 }
 
-function stop_game() {
-  clearInterval(timer);
+function between_games() {
+  document.addEventListener("keydown", start_game);
 }
 
 function play_game() {
