@@ -2,6 +2,7 @@ let black = "black";
 let amber = "#f80";
 
 let score = 0;
+let name = "me";
 
 let egg_on = false;
 let egg_timer = 0;
@@ -11,6 +12,38 @@ let score_timer = 10;
 let flash_count = 13;
 
 let field = Array(42*42); // array of bool
+
+let high_scores = [ {
+    name: "mark",
+    score: 321
+}, {
+    name: "marky mark",
+    score: 231
+}, {
+    name: "mak",
+    score: 231
+}, {
+    name: "Mark the Great",
+    score: 231
+}, {
+    name: "Mark to end all Marks",
+    score: 231
+}, {
+    name: "Once and Future Mark",
+    score: 231
+}, {
+    name: "Mark, Sr.",
+    score: 231
+}, {
+    name: "Mark Alan Kamradt",
+    score: 231
+}, {
+    name: "goofy",
+    score: 231
+}, {
+    name: "yugyfoog",
+    score: 123
+}];
 
 class Point {
   constructor(x, y) {
@@ -68,8 +101,6 @@ let snake_build = 0;
 let snake_direction = direction.DOWN;
 
 function set_point(p) {
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined");
   field[p.indx()] = true;
 }
 
@@ -250,11 +281,7 @@ function on_clock() {
 let timer = {};
 
 function set_snake_head(p) {
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined (2)");
   snake[snake_head] = p;
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined (2)");
   set_point(p);
 }
 
@@ -263,7 +290,6 @@ function clear_snake_tail() {
 }
 
 function game_key(event) {
-  console.log(event.code)
   switch (event.code) {
   case "ArrowDown":
   case "KeyS":
@@ -297,23 +323,51 @@ function start_game(e) {
   egg_on = false;
   egg_timer = 20;
   let p = new Point(20, 20);
-  if (typeof(p) == "undefined")
-    console.log("variable p is undefined (1)");
   set_snake_head(p);
   timer = setInterval(on_clock, 100);
 }
 
+function update_high_scores() {
+    for (i = 0; i < high_scores.length; i++) {
+	if (high_scores[i].score < score) {
+	    let tscore = high_scores[i].score;
+	    let tname = high_scores[i].name;
+	    high_scores[i].score = score;
+	    high_scores[i].name = name;
+	    score = tscore;
+	    name = tname;
+	}
+    }
+}
+
 function between_games() {
-  document.addEventListener("keydown", start_game);
+    if (score > high_scores[high_scores.length-1].score) {
+	update_high_scores();
+	display_high_scores();
+    }
+    document.addEventListener("keydown", start_game);
+}
+
+function display_high_scores() {
+    let element = document.getElementById("highscores");
+
+    while (element.firstChild)
+	element.removeChild(element.firstChild);
+    
+    for (i = 0; i < high_scores.length; i++) {
+	let div = document.createElement('div');
+	div.textContent = `${i+1} ${high_scores[i].name} ${high_scores[i].score}`;
+	element.appendChild(div);
+    }
 }
 
 function play_game() {
-  let score = document.getElementById("score");
-  score.textContent = "Press a key to play Snake!"
-  document.addEventListener("keydown", start_game);
+    init_array();
+    draw_array();
+    display_high_scores();
+    let score = document.getElementById("score");
+    score.textContent = "Press a key to play Snake!"
+    document.addEventListener("keydown", start_game);
 }
-
-init_array();
-draw_array();
 
 play_game();
