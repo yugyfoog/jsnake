@@ -1,8 +1,38 @@
+// flow of control
+//
+//  before game:
+//
+//     play_game() -- initialize game and set key press callback to start_game()
+//
+//     start_game() -- starts game. Set key press callback to game_key(), timer callback to on_clock()
+//
+//  in game:
+//
+//     game_key() -- set snake_direction to key pressed
+//
+//     on_clock() -- main game logic. calls end_game() when game over.
+//
+//     end_game() -- set timer callback to flash_screen()
+//
+//  game over:
+//
+//     flash_screen() -- inverts screen color. calls check_score() after 12 times. (6 inversion cycles)
+//
+//     check_score() -- if need to update highscore list
+//                          input change callback to update_high_scores();
+//                      else
+//                          call between_games()
+//
+//     update_high_scores() -- change score list, call between_games()
+//
+//     between_games() -- updates high score list, sets key press callback to start_game()
+//
+
+
 let black = "black";
 let amber = "#f80";
 
 let score = 0;
-let name = "me";
 
 let egg_on = false;
 let egg_timer = 0;
@@ -15,34 +45,34 @@ let field = Array(42*42); // array of bool
 
 let high_scores = [ {
     name: "mark",
-    score: 321
+    score: 0
 }, {
-    name: "marky mark",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "mak",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "Mark the Great",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "Mark to end all Marks",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "Once and Future Mark",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "Mark, Sr.",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "Mark Alan Kamradt",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "goofy",
-    score: 231
+    name: "mark",
+    score: 0
 }, {
-    name: "yugyfoog",
-    score: 123
+    name: "Randy",
+    score: 0
 }];
 
 class Point {
@@ -149,7 +179,7 @@ function flash_screen() {
   flash_count -= 1;
   if (flash_count <= 0) {
     clearInterval(timer);
-    between_games();
+    check_score();
   }
   else {
     if (flash_count%2 == 0) {
@@ -311,40 +341,65 @@ function game_key(event) {
 }
 
 function start_game(e) {
-  document.removeEventListener("keydown", start_game);
-  document.addEventListener("keydown", game_key);
-  init_array();
-  score = 0;
-  display_score();
-  snake_head = 0;
-  snake_tail = 0;
-  snake_direction = direction.DOWN;
-  snake_grow = 5;
-  egg_on = false;
-  egg_timer = 20;
-  let p = new Point(20, 20);
-  set_snake_head(p);
-  timer = setInterval(on_clock, 100);
+    document.removeEventListener("keydown", start_game);
+    document.addEventListener("keydown", game_key);
+    let message = document.getElementById("message");
+    message.textContent = "";
+    init_array();
+    score = 0;
+    display_score();
+    snake_head = 0;
+    snake_tail = 0;
+    snake_direction = direction.DOWN;
+    snake_grow = 5;
+    egg_on = false;
+    egg_timer = 20;
+    let p = new Point(20, 20);
+    set_snake_head(p);
+    timer = setInterval(on_clock, 100);
 }
 
-function update_high_scores() {
-    for (i = 0; i < high_scores.length; i++) {
+function update_high_scores(e) {
+    let name = e.target.value;
+ 
+    let input = document.getElementById("input");
+    while (input.firstChild)
+	input.removeChild(input.firstChild);
+
+    for (i = high_scores.length-2; i >= 0; i--) {
 	if (high_scores[i].score < score) {
-	    let tscore = high_scores[i].score;
-	    let tname = high_scores[i].name;
-	    high_scores[i].score = score;
-	    high_scores[i].name = name;
-	    score = tscore;
-	    name = tname;
+	    high_scores[i+1].score = high_scores[i].score;
+	    high_scores[i+1].name = high_scores[i].name;
 	}
+	else
+	    break;
     }
+    high_scores[i+1].score = score;
+    high_scores[i+1].name = name;
+
+    display_high_scores();
+    between_games();
 }
+
+
+function check_score() {
+    if (score > high_scores[high_scores.length-1].score) {
+	let message = document.getElementById("message");
+	message.textContent = "Enter your name";
+	let input = document.getElementById("input");
+	let name = document.createElement("input");
+	name.addEventListener("change", update_high_scores);
+	input.appendChild(name);
+	name.focus();
+    }
+    else
+	between_games();
+}
+
 
 function between_games() {
-    if (score > high_scores[high_scores.length-1].score) {
-	update_high_scores();
-	display_high_scores();
-    }
+    let message = document.getElementById("message");
+    message.textContent = "Press a key to play again";
     document.addEventListener("keydown", start_game);
 }
 
@@ -365,8 +420,8 @@ function play_game() {
     init_array();
     draw_array();
     display_high_scores();
-    let score = document.getElementById("score");
-    score.textContent = "Press a key to play Snake!"
+    let message = document.getElementById("message");
+    message.textContent = "Press a key to play Snake!"
     document.addEventListener("keydown", start_game);
 }
 
