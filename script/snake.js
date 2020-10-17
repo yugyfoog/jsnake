@@ -315,6 +315,14 @@ function between_games() {
 }
 
 function play_game() {
+  var oReq = new XMLHttpRequest();
+  oReq.onload = function(e) {
+    console.log(this.responseText);
+    let score = document.getElementById("highscore");
+    score.textContent = this.responseText
+  }
+  oReq.open("GET", "/couchdb/highscore");
+  oReq.send();
   let score = document.getElementById("score");
   score.textContent = "Press a key to play Snake!"
   document.addEventListener("keydown", start_game);

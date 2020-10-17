@@ -1,0 +1,2 @@
+docker build -t rlkamradt/jsnake .
+docker push rlkamradt/jsnake
