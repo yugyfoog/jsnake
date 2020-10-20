@@ -33,14 +33,16 @@ function serve(directory, port) {
     let server = new http.Server();
     server.listen(port);
     console.log("Listening on port", port);
-   
+
     server.on("request", (request, response) => {
 	let parsed_url = url.parse(request.url);
-	
-	let filename = parsed_url.pathname;	
+
+	let filename = parsed_url.pathname;
+  if (filename === "" || filename === "/")
+      filename = "/snake.html";
 	if (filename === "/scores.json")
 	    update_scores(querystring.parse(parsed_url.query));
-	
+
 	filename = path.resolve(directory, filename.substring(1)
 				.replace(/\.\.\//g, ""));
 
@@ -72,7 +74,7 @@ function serve(directory, port) {
 	    response.writeHead(200);
 	    stream.pipe(response);
 	});
-	
+
 	stream.on("error", (err) => {
 	    response.setHeader("Content-Type", "text/plain; charset=UTF-8");
 	    response.writeHead(404);
