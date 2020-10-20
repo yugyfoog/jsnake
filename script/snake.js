@@ -2,32 +2,71 @@
 //
 //  before game:
 //
-//     play_game() -- initialize game and set key press callback to start_game()
+//     html load:
+//         play_game() -- initialize game and set key press callback to start_game()
+//             init_array()
+//                 set_point()
+//                 reset_point()
+//             fetch_high_scores()
+//                 display_high_scores()
 //
-//     start_game() -- starts game. Set key press callback to game_key(), timer callback to on_clock()
+//     key event:
+//         start_game() -- starts game. Set key press callback to game_key(), timer callback to on_clock()
+//             init_array()
+//                 set_point()
+//                 reset_point()
+//             display_score()
+//             set_snake_head()
+//                 set_point()
 //
 //  in game:
 //
-//     game_key() -- set snake_direction to key pressed
+//     key event:
+//         game_key() -- set snake_direction to key pressed
 //
-//     on_clock() -- main game logic. calls end_game() when game over.
+//     timer event:
+//         on_clock() -- main game logic. calls end_game() when game over.
+//             end_game() -- set timer callback to flash_screen()
+//             update_score()
+//                 display_score()
+//             set_egg()
+//                 point_set()
+//                 set_point()
+//             clear_egg()
+//                 reset_point()
+//             set_snake_head()
+//                 set_point()
+//             clear_snake_tail()
+//                 reset_point()
+//             point_set()
+//             display_score()
+//             draw_array()
+//                 point_set()
+//                 draw_square()
 //
-//     end_game() -- set timer callback to flash_screen()
 //
 //  game over:
 //
-//     flash_screen() -- inverts screen color. calls check_score() after 12 times. (6 inversion cycles)
+//     timer event:
+//         flash_screen() -- inverts screen color. calls check_score() after 12 times. (6 inversion cycles)
+//             draw_array()
+//                 point_set()
+//                 draw_square()
+//             draw_array_inverse()
+//                 point_set()
+//                 draw_square()
+//             check_score() -- check to see if we need to input name, if so set callback to update_high_scores
+//                 fetch_high_scores()
+//                     display_high_scores()
+//                 between_games()
 //
-//     check_score() -- if need to update highscore list
-//                          input change callback to update_high_scores();
-//                      else
-//                          call between_games()
 //
-//     update_high_scores() -- change score list, call between_games()
+//     input change event:
+//         update_high_scores() -- change score list, call between_games()
+//             fetch_high_scores();
+//                 display_high_scores()
+//             between_games()
 //
-//     between_games() -- updates high score list, sets key press callback to start_game()
-//
-
 
 let black = "black";
 let amber = "#f80";
@@ -43,37 +82,19 @@ let flash_count = 13;
 
 let field = Array(42*42); // array of bool
 
-let high_scores = [ {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "mark",
-    score: 0
-}, {
-    name: "Randy",
-    score: 0
-}];
+let high_scores;
+
+let canvas = document.querySelector("#square");
+let context = canvas.getContext("2d");
+
+const direction = {
+  UP: 1,
+  DOWN: 2,
+  LEFT: 3,
+  RIGHT: 4
+};
+
+let snake_direction = direction.DOWN;
 
 class Point {
   constructor(x, y) {
@@ -90,15 +111,12 @@ class Point {
   }
 }
 
-let canvas = document.querySelector("#square");
-let context = canvas.getContext("2d");
+let snake = Array(1600); // array of Point
+let snake_head = 0;
+let snake_tail = 0;
+let snake_build = 0;
 
-const direction = {
-  UP: 1,
-  DOWN: 2,
-  LEFT: 3,
-  RIGHT: 4
-};
+let timer = {};
 
 function draw_square(x, y, color) {
   context.fillStyle = color;
@@ -123,12 +141,6 @@ function init_array() {
     }
   }
 }
-
-let snake = Array(1600); // array of Point
-let snake_head = 0;
-let snake_tail = 0;
-let snake_build = 0;
-let snake_direction = direction.DOWN;
 
 function set_point(p) {
   field[p.indx()] = true;
@@ -308,8 +320,6 @@ function on_clock() {
   draw_array();
 }
 
-let timer = {};
-
 function set_snake_head(p) {
   snake[snake_head] = p;
   set_point(p);
@@ -361,26 +371,12 @@ function start_game(e) {
 
 function update_high_scores(e) {
     let name = e.target.value;
- 
     let input = document.getElementById("input");
     while (input.firstChild)
 	input.removeChild(input.firstChild);
-
-    for (i = high_scores.length-2; i >= 0; i--) {
-	if (high_scores[i].score < score) {
-	    high_scores[i+1].score = high_scores[i].score;
-	    high_scores[i+1].name = high_scores[i].name;
-	}
-	else
-	    break;
-    }
-    high_scores[i+1].score = score;
-    high_scores[i+1].name = name;
-
-    display_high_scores();
+    fetch_high_scores(name, score);
     between_games();
 }
-
 
 function check_score() {
     if (score > high_scores[high_scores.length-1].score) {
@@ -392,10 +388,11 @@ function check_score() {
 	input.appendChild(name);
 	name.focus();
     }
-    else
+    else {
+	fetch_high_scores("", 0);
 	between_games();
+    }
 }
-
 
 function between_games() {
     let message = document.getElementById("message");
@@ -406,8 +403,12 @@ function between_games() {
 function display_high_scores() {
     let element = document.getElementById("highscores");
 
+    // remove old high scores
+
     while (element.firstChild)
 	element.removeChild(element.firstChild);
+
+    // write new high scores
     
     for (i = 0; i < high_scores.length; i++) {
 	let div = document.createElement('div');
@@ -416,10 +417,21 @@ function display_high_scores() {
     }
 }
 
+function fetch_high_scores(name, score) {
+    console.log(`fetch high scores ${name} ${score}`);
+    fetch(`scores.json?name=${name}&score=${score}`)
+	.then(response => response.json())
+	.then(data => {
+	    high_scores = data;
+	    display_high_scores();});
+}
+
 function play_game() {
     init_array();
     draw_array();
-    display_high_scores();
+
+    fetch_high_scores("", 0);
+
     let message = document.getElementById("message");
     message.textContent = "Press a key to play Snake!"
     document.addEventListener("keydown", start_game);
