@@ -424,7 +424,7 @@ function display_high_scores() {
 function hash(name, score) {
     let h = 0;
     for (let i = 0; i < name.length; i++)
-	h = ((h<<4)^(h>>4)^name[i].value) % 32771;
+	h = ((h<<4)^(h>>4)^name.charCodeAt(i)) % 32771;
     return h^score;
 }
 
