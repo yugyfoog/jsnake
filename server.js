@@ -6,27 +6,39 @@ const querystring = require("querystring");
 const path = require("path");
 const fs = require("fs");
 
+function hash(name, score) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++)
+	h = ((h<<4)^(h>>4)^name[i].value) % 32771;
+    return h^score;
+}
+
 function update_scores(new_score) {
     new_score.score = parseInt(new_score.score);
-    let high_scores = JSON.parse(fs.readFileSync("scores.json"));
-    if (new_score.score > high_scores[high_scores.length-1].score) {
-	for (var i = high_scores.length-2; i >= 0; i--) {
-	    if (new_score.score <= high_scores[i].score) {
-		high_scores[i+1].name = new_score.name;
-		high_scores[i+1].score = new_score.score;
-		break;
+    let h = hash(new_score.name, new_score.score);
+    if (h === parseInt(new_score.hash)) {
+	let high_scores = JSON.parse(fs.readFileSync("scores.json"));
+	if (new_score.score > high_scores[high_scores.length-1].score) {
+	    for (var i = high_scores.length-2; i >= 0; i--) {
+		if (new_score.score <= high_scores[i].score) {
+		    high_scores[i+1].name = new_score.name;
+		    high_scores[i+1].score = new_score.score;
+		    break;
+		}
+		else {
+		    high_scores[i+1].name = high_scores[i].name;
+		    high_scores[i+1].score = high_scores[i].score;
+		}
 	    }
-	    else {
-		high_scores[i+1].name = high_scores[i].name;
-		high_scores[i+1].score = high_scores[i].score;
+	    if (i == -1) {
+		high_scores[0].name = new_score.name;
+		high_scores[0].score = new_score.score;
 	    }
+	    fs.writeFileSync("scores.json", JSON.stringify(high_scores));
 	}
-	if (i == -1) {
-	    high_scores[0].name = new_score.name;
-	    high_scores[0].score = new_score.score;
-	}
-	fs.writeFileSync("scores.json", JSON.stringify(high_scores));
     }
+    else
+	console.log("cheater detected: " + new_score.name);
 }
 
 function serve(directory, port) {

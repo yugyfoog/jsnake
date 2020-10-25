@@ -68,15 +68,11 @@
 //             between_games()
 //
 
+
 let black = "black";
 let amber = "#f80";
 
 let score = 0;
-
-let egg_on = false;
-let egg_timer = 0;
-
-let score_timer = 10;
 
 let flash_count = 13;
 
@@ -114,7 +110,12 @@ class Point {
 let snake = Array(1600); // array of Point
 let snake_head = 0;
 let snake_tail = 0;
-let snake_build = 0;
+let snake_grow = 0;
+
+let egg_on = false;
+let egg_timer = 0;
+let egg_position = new Point(0,0);
+let score_timer = 10;
 
 let timer = {};
 
@@ -125,18 +126,18 @@ function draw_square(x, y, color) {
 
 function init_array() {
   // left and right border
-  for (i = 0; i < 42; i++) {
+  for (let i = 0; i < 42; i++) {
     set_point(new Point(0, i));
     set_point(new Point(41, i));
   }
   // top and bottom
-  for (i = 1; i < 41; i++) {
+  for (let i = 1; i < 41; i++) {
     set_point(new Point(i, 0));
     set_point(new Point(i, 41));
   }
   // fill in middle
-  for (i = 1; i < 41; i++) {
-    for (j = 1; j < 41; j++) {
+  for (let i = 1; i < 41; i++) {
+    for (let j = 1; j < 41; j++) {
       reset_point(new Point(i, j));
     }
   }
@@ -162,8 +163,8 @@ function display_score() {
 }
 
 function draw_array() {
-  for (i = 0; i < 42; i++) {
-    for (j = 0; j < 42; j++) {
+  for (let i = 0; i < 42; i++) {
+    for (let j = 0; j < 42; j++) {
       if (point_set(new Point(i, j))) {
         draw_square(i, j, amber);
       }
@@ -175,8 +176,8 @@ function draw_array() {
 }
 
 function draw_array_inverse() {
-  for (i = 0; i < 42; i++) {
-    for (j = 0; j < 42; j++) {
+  for (let i = 0; i < 42; i++) {
+    for (let j = 0; j < 42; j++) {
       if (point_set(new Point(i, j))) {
         draw_square(i, j, black);
       }
@@ -371,6 +372,9 @@ function start_game(e) {
 
 function update_high_scores(e) {
     let name = e.target.value;
+
+    if (name.search(/^[ 0-9A-Za-z]{1,17}$/) === -1)
+	return;
     let input = document.getElementById("input");
     while (input.firstChild)
 	input.removeChild(input.firstChild);
@@ -410,16 +414,23 @@ function display_high_scores() {
 
     // write new high scores
     
-    for (i = 0; i < high_scores.length; i++) {
+    for (let i = 0; i < high_scores.length; i++) {
 	let div = document.createElement('div');
 	div.textContent = `${i+1} ${high_scores[i].name} ${high_scores[i].score}`;
 	element.appendChild(div);
     }
 }
 
+function hash(name, score) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++)
+	h = ((h<<4)^(h>>4)^name[i].value) % 32771;
+    return h^score;
+}
+
 function fetch_high_scores(name, score) {
-    console.log(`fetch high scores ${name} ${score}`);
-    fetch(`scores.json?name=${name}&score=${score}`)
+    let h = hash(name, score);
+    fetch(`scores.json?name=${name}&score=${score}&hash=${h}`)
 	.then(response => response.json())
 	.then(data => {
 	    high_scores = data;
